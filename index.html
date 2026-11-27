@@ -39,7 +39,7 @@ nav button.on{color:var(--pri);box-shadow:inset 0 3px 0 var(--pri)}
 .ln{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--ln)}
 .rt{display:grid;grid-template-columns:1fr 64px 64px 84px;gap:6px;align-items:center;padding:8px 10px;background:var(--sf);border-bottom:1px solid var(--ln)}
 .rt.h{font-weight:800;color:var(--mut);font-size:15px}.rt span:not(:first-child){text-align:center}
-.sendbar{position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
+.rt6{grid-template-columns:1fr repeat(5,48px);font-size:15px}.rt2{grid-template-columns:1fr 80px}.sendbar{position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
 .sendbar .btn{width:100%;font-size:20px;min-height:58px}
 .tag{font-size:14px;padding:2px 10px;border-radius:999px;border:1px solid var(--ln);color:var(--mut)}
 .tag.ok{color:var(--ok);border-color:var(--ok)}.tag.bad{color:var(--bad);border-color:var(--bad)}
@@ -112,7 +112,7 @@ async function sendOrder(){
  catch(e){toast('فشل الإرسال، اتأكد من النت');$('send').disabled=false}}
 
 /* ================= الأدمن ================= */
-let STAFF=[],ORD=[],LED={},S={tab:'ord',d:iso(new Date()),mode:'in',dest:'الثاني',ct:'count',q:'',only:false},recs=null,unsubs=[];
+let STAFF=[],ORD=[],LED={},S={pm:'w',rf:'all',tab:'ord',d:iso(new Date()),mode:'in',dest:'الثاني',ct:'count',q:'',only:false},recs=null,unsubs=[];
 const TABS=[['ord','الطلبات'],['mv','صرف/استلام'],['cnt','جرد'],['rep','التقرير'],['stf','الموظفين']];
 function adminStart(){
  unsubs.forEach(f=>f());unsubs=[];
@@ -123,7 +123,7 @@ function adminStart(){
  unsubs.push(onSnapshot(collection(db,'staff'),s=>{STAFF=s.docs.map(d=>({id:d.id,...d.data()}));later(adm)},()=>{}));
  adm()}
 const lid=(t,de,i)=>[t,de,S.d,i].join('|');
-function R(){if(!recs){recs=Object.values(LED).map(r=>({t:r.t,d:r.d,i:r.i,q:r.q}));ORD.filter(o=>o.status==='confirmed').forEach(o=>Object.entries(o.items||{}).forEach(([i,v])=>recs.push({t:'out',d:o.date,i:+i,q:v})))}return recs}
+function R(){if(!recs){recs=Object.values(LED).map(r=>({t:r.t,de:r.de||'',d:r.d,i:r.i,q:r.q}));ORD.filter(o=>o.status==='confirmed').forEach(o=>Object.entries(o.items||{}).forEach(([i,v])=>recs.push({t:'out',de:o.floor,d:o.date,i:+i,q:v})))}return recs}
 function calc(i,up){let od='',ob=0;const rs=R().filter(r=>r.i===i&&r.d<=up);rs.forEach(r=>{if(r.t==='open'&&r.d>=od){od=r.d;ob=r.q}});let s=ob;rs.forEach(r=>{if(r.d<od)return;if(r.t==='in')s+=r.q;else if(r.t==='out')s-=r.q});return s}
 function lastCount(i){let od='',b=null;R().forEach(r=>{if(r.i===i&&r.t==='open'&&r.d<=S.d&&r.d>od)od=r.d});R().forEach(r=>{if(r.i===i&&r.t==='count'&&r.d<=S.d&&r.d>=od&&(!b||r.d>b.d))b=r});return b}
 async function put(t,de,i,v){const id=lid(t,de,i);if(v===''||isNaN(v)||((t==='out'||t==='in')&&v<=0)){delete LED[id];recs=null;await deleteDoc(doc(db,'ledger',id))}else{LED[id]={t,de,d:S.d,i,q:v};recs=null;await setDoc(doc(db,'ledger',id),{t,de,d:S.d,i,q:v})}}
@@ -154,14 +154,38 @@ function ordersView(){
  const card=(o,p)=>`<div class="card"><h3>${esc(o.name)} <span class="tag">${o.floor==='كافيتيريا'?o.floor:'دور '+esc(o.floor)}</span> <small>${o.date}</small></h3>`+Object.entries(o.items||{}).map(([i,v])=>`<div class="ln"><span>${esc(ITEMS[i])}</span>${p?`<input class="q s" inputmode="numeric" data-oe="${o.id}|${i}" value="${v}">`:'<b>'+v+'</b>'}</div>`).join('')+
   (p?`<div class="act"><button class="btn" data-ok="${o.id}">تأكيد</button><button class="btn d" data-no="${o.id}">رفض</button></div>`:`<div class="act"><span class="tag ${o.status==='confirmed'?'ok':'bad'}">${o.status==='confirmed'?'تم التأكيد':'مرفوض'}</span><button class="btn o" data-un="${o.id}">رجوع لمعلق</button></div>`)+'</div>';
  return(P_.length?(P_.length>1?'<div class="act"><button class="btn" data-okall="1">تأكيد الكل ('+P_.length+')</button></div>':'')+P_.map(o=>card(o,1)).join(''):'<div class="em">مفيش طلبات معلقة ✓</div>')+(D.length?'<h3>آخر الطلبات</h3>'+D.map(o=>card(o,0)).join(''):'')}
+function wk(d){const x=new Date(d+'T00:00:00');x.setDate(x.getDate()-(x.getDay()+1)%7);return iso(x)}
+function addD(d,n){const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return iso(x)}
+function rng(){if(S.pm==='m'){const a=S.d.slice(0,7)+'-01',x=new Date(a+'T00:00:00');x.setMonth(x.getMonth()+1);x.setDate(0);return[a,iso(x)]}const a=wk(S.d);return[a,addD(a,6)]}
+function wd(i,a,b){
+ const rs=R().filter(r=>r.i===i&&r.d<=b);let od=null,ob=0;
+ rs.forEach(r=>{if(r.t==='open'&&r.d>=a&&(od===null||r.d>=od)){od=r.d;ob=r.q}});
+ if(od===null){let cd='';rs.forEach(r=>{if(r.t==='count'&&r.d<a&&r.d>=cd){cd=r.d;ob=r.q}})}
+ const st=od===null?a:od,ps=rs.filter(r=>r.d>=st);let inn=0,out=0;const bf={};
+ ps.forEach(r=>{if(r.t==='in')inn+=r.q;else if(r.t==='out'){out+=r.q;bf[r.de]=(bf[r.de]||0)+r.q}});
+ let c=null;ps.forEach(r=>{if(r.t==='count'&&(!c||r.d>=c.d))c=r});
+ let ex=ob+inn-out,df=null,cnt=null;
+ if(c){let e2=ob;ps.forEach(r=>{if(r.d<=c.d){if(r.t==='in')e2+=r.q;else if(r.t==='out')e2-=r.q}});cnt=c.q;df=Math.round((c.q-e2)*100)/100}
+ return{ob,inn,out,cnt,df,bf}}
 function reportView(){
- const D=ITEMS.map((n,i)=>{const c=lastCount(i),ex=c?calc(i,c.d):calc(i,S.d);return{n,ex,c:c?c.q:null,df:c?Math.round((c.q-ex)*100)/100:null}});
- const bad=D.filter(x=>x.df).length,cnt=D.filter(x=>x.c!==null).length;
- const L=D.filter(x=>x.ex!==0||x.c!==null).filter(x=>!S.only||x.df);
- const fm=d=>d===null?'—':d<0?`<span class="bad">ناقص ${-d}</span>`:d>0?`<span class="ok">زيادة ${d}</span>`:'<span class="ok">مظبوط</span>';
- window._rep=D;
- return`<p>تم جرد <b>${cnt}</b> صنف، والفروقات في <b class="${bad?'bad':'ok'}">${bad}</b> صنف.</p><div class="act"><button class="btn${S.only?'':' o'}" data-f="1">${S.only?'عرض الكل':'الفروقات فقط'}</button><button class="btn o" data-cp="1">نسخ التقرير</button></div><div class="rt h"><span>الصنف</span><span>متوقع</span><span>جرد</span><span>الفرق</span></div>`+
- (L.length?L.map(x=>`<div class="rt"><span>${esc(x.n)}</span><span>${x.ex}</span><span>${x.c===null?'—':x.c}</span><span>${fm(x.df)}</span></div>`).join(''):'<div class="em">لسه مفيش حركة. ابدأ بـ جرد ← فتح الأسبوع.</div>')}
+ const[a,b]=rng(),PS=[];let s0=a;while(s0<=b){const w=addD(wk(s0),6),e=w<b?w:b;PS.push([s0,e]);s0=addD(e,1)}
+ const sum=(l,k)=>l.reduce((x,y)=>x+y[k],0);
+ const D=ITEMS.map((n,i)=>{const ws=PS.map(p=>wd(i,p[0],p[1])),dfs=ws.filter(x=>x.df!==null),bf={};
+  ws.forEach(x=>{for(const k in x.bf)bf[k]=(bf[k]||0)+x.bf[k]});
+  return{n,ob:ws[0].ob,inn:sum(ws,'inn'),out:sum(ws,'out'),cnt:dfs.length?dfs[dfs.length-1].cnt:null,df:dfs.length?Math.round(sum(dfs,'df')*100)/100:null,bf}});
+ const fl=S.rf!=='all';
+ let L=D.filter(x=>fl?(x.bf[S.rf]||0)>0:(x.ob||x.inn||x.out||x.cnt!==null));
+ if(S.only&&!fl)L=L.filter(x=>x.df);
+ const bad=D.filter(x=>x.df).length,cn=D.filter(x=>x.cnt!==null).length;
+ const fm=d=>d===null?'—':d<0?`<span class="bad">-${-d}</span>`:d>0?`<span class="ok">+${d}</span>`:'<span class="ok">✓</span>';
+ const lab=S.pm==='m'?'شهر '+a.slice(0,7):'أسبوع '+a+' ← '+b;
+ window._txt='تقرير '+lab+(fl?' - '+S.rf:'')+'\n'+L.map(x=>fl?x.n+': '+x.bf[S.rf]:x.n+': فتح '+x.ob+' / استلام '+x.inn+' / صرف '+x.out+' / جرد '+(x.cnt===null?'—':x.cnt)+' / فرق '+(x.df===null?'—':x.df)).join('\n');
+ let h=chips([['w','أسبوعي'],['m','شهري']],S.pm,'pm')+`<div class="act" style="align-items:center;justify-content:space-between"><button class="chip" data-pn="-1">السابق ›</button><b>${lab}</b><button class="chip" data-pn="1">‹ التالي</button></div>`;
+ h+=chips([['all','كل الأدوار']].concat(OUT.map(x=>[x,x])),S.rf,'rf');
+ h+=`<p>تم جرد <b>${cn}</b> صنف، والفروقات في <b class="${bad?'bad':'ok'}">${bad}</b> صنف.</p><div class="act"><button class="btn${S.only?'':' o'}" data-f="1">${S.only?'عرض الكل':'الفروقات فقط'}</button><button class="btn o" data-cp="1">نسخ التقرير</button></div>`;
+ h+=fl?'<div class="rt rt2 h"><span>الصنف</span><span>صرف '+esc(S.rf)+'</span></div>':'<div class="rt rt6 h"><span>الصنف</span><span>فتح</span><span>استلام</span><span>صرف</span><span>جرد</span><span>فرق</span></div>';
+ h+=L.length?L.map(x=>fl?`<div class="rt rt2"><span>${esc(x.n)}</span><span>${x.bf[S.rf]}</span></div>`:`<div class="rt rt6"><span>${esc(x.n)}</span><span>${x.ob}</span><span>${x.inn}</span><span>${x.out}</span><span>${x.cnt===null?'—':x.cnt}</span><span>${fm(x.df)}</span></div>`).join(''):'<div class="em">مفيش حركة في الفترة دي.</div>';
+ return h}
 
 /* ================= الأحداث ================= */
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
@@ -182,11 +206,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
  else if(d.mode){if(d.mode==='in')S.mode='in';else{S.mode='out';S.dest=d.mode.slice(2)}adm()}
  else if(d.ct){S.ct=d.ct;adm()}
  else if(d.f){S.only=!S.only;adm()}
+ else if(d.pm){S.pm=d.pm;adm()}
+ else if(d.rf){S.rf=d.rf;adm()}
+ else if(d.pn){const k=+d.pn,x=new Date(S.d+'T00:00:00');if(S.pm==='m'){x.setDate(1);x.setMonth(x.getMonth()+k)}else x.setDate(x.getDate()+7*k);S.d=iso(x);$('dt').value=S.d;adm()}
  else if(d.ok)await updateDoc(doc(db,'orders',d.ok),{status:'confirmed'});
  else if(d.no)await updateDoc(doc(db,'orders',d.no),{status:'rejected'});
  else if(d.un)await updateDoc(doc(db,'orders',d.un),{status:'pending'});
  else if(d.okall){for(const o of ORD.filter(o=>o.status==='pending'))await updateDoc(doc(db,'orders',o.id),{status:'confirmed'})}
- else if(d.cp){const t='تقرير الجرد '+S.d+'\n'+window._rep.filter(x=>x.c!==null).map(x=>x.n+': متوقع '+x.ex+' / جرد '+x.c+' / '+(x.df<0?'ناقص '+(-x.df):x.df>0?'زيادة '+x.df:'مظبوط')).join('\n');try{await navigator.clipboard.writeText(t);toast('تم النسخ')}catch(x){toast('النسخ مش متاح')}}
+ else if(d.cp){try{await navigator.clipboard.writeText(window._txt||'');toast('تم النسخ')}catch(x){toast('النسخ مش متاح')}}
  else if(d.a){const r=b.closest('.row'),inp=r.querySelector('.q'),i=+d.i;
   if(U&&!ADM){C[i]=Math.max(0,(C[i]||0)+ +d.a);inp.value=C[i]||'';r.classList.toggle('has',C[i]>0);const n=Object.values(C).reduce((a,c)=>a+c,0),s=$('send');s.disabled=!n;s.textContent=n?'إرسال الطلب ('+n+' قطعة)':'اختار الأصناف الأول'}
   else{const t=S.mode==='in'?'in':'out',de=t==='out'?S.dest:'',v=Math.max(0,getL(t,de,i)+ +d.a);inp.value=v||'';r.classList.toggle('has',v>0);await put(t,de,i,v)}}
