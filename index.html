@@ -28,7 +28,7 @@ main{flex:1;overflow-y:auto;padding:10px 12px 20px;max-width:900px;width:100%;ma
 .q{width:64px;height:54px;text-align:center;font:800 22px Cairo,sans-serif;border:1.5px solid var(--ln);border-radius:14px;background:var(--bg);color:var(--ink);padding:0}
 .q.w{width:96px}.q.s{width:56px;height:42px;font-size:18px}
 nav{display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0)}
-nav button{flex:1;border:0;background:none;color:var(--mut);font:600 17px Cairo,sans-serif;padding:14px 4px;min-height:60px}
+nav button{flex:1;border:0;background:none;color:var(--mut);font:600 15px Cairo,sans-serif;padding:14px 4px;min-height:60px}
 nav button.on{color:var(--pri);box-shadow:inset 0 3px 0 var(--pri)}
 .bad{color:var(--bad);font-weight:800}.ok{color:var(--ok);font-weight:800}
 .act{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
@@ -53,9 +53,9 @@ nav button.on{color:var(--pri);box-shadow:inset 0 3px 0 var(--pri)}
 /* ===== الصق إعدادات Firebase هنا (من إعدادات المشروع) ===== */
 const CFG={apiKey:"AIzaSyAXrGIzcTJV6IILfEl2G7jLNKJC-hUYn4U",authDomain:"minstry-project.firebaseapp.com",projectId:"minstry-project",appId:"1:975831851466:web:bf63c36934167baa046f33"};
 /* ========================================================= */
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,signInAnonymously,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getFirestore,collection,doc,addDoc,setDoc,updateDoc,deleteDoc,deleteField,onSnapshot,query,where,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{initializeApp,deleteApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInAnonymously,signInWithEmailAndPassword,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getFirestore,collection,doc,addDoc,setDoc,updateDoc,deleteDoc,deleteField,getDoc,getDocs,onSnapshot,query,where,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 const ITEMS=["شاى فتله ليبتون", "شاء فتلة بحليب", "شاى فتله كرك", "سحلب", "اعشاب", "قهوة تركى عادية", "قهوة فرنساوى", "قهوة ابو عوف", "كابتشينو", "نسكافية كلاسيك", "نسكافية لبن", "كوفى ميكس", "لبن سادة", "اضافه لبن", "كنز كوكا كولا", "كنز جيب", "عصير علب", "اسبيرو اسباتيس", "فيورى", "عصير هيلثى", "دبل دير", "زبادو", "بريل", "فيروز", "رانى", "فروتس", "فيو كولا", "هيلثى كولا", "ريد بول", "كانز تويست", "مياه 6", "مياه 7", "بيك رولز", "بيك رولز كبير", "ويندز", "شيبسى بانواعه 11", "شيبسى بانواعه 16", "بريك كبير", "شيتوس 11", "دوريتوس 8", "دوريتوس 11", "بريك", "جاجوار 11", "جاجوار 16", "صن بايتس16", "صن بايتس 11", "فلامنكو كبير", "فلامنكو صغير", "شيبسى توست", "بسكوت اولكر ساده", "بسكوت اولكر عجوه", "بسكوت اولكر كبير", "مولتو كينج", "مولتو كبير", "مولتو مينى", "فريسكا", "فريسكا كبيره", "هوهوز", "هوهوز ميكس", "توينكز", "توينكز ميكس", "تودو", "بسكوت اونيرو", "بسكوت اونيرو كبير", "بسكوت معمول", "بسكوت شاى", "بسكوت لوكس", "بسكوت كوكا", "بسكوت داتو", "بسكوت هالى", "بسكوت شوفان كبير", "بسكوت شوفان شيكولاته", "بسكوت شوفان ساده", "بسكوت نايس", "دولشى", "بسكوت ويفر", "بسكريم صغير", "بسكريم كبير", "لمبادا 7", "لمبادا فامليي 12", "كيك دورو 12", "كيك دورو 15", "هوهوز كبير اوووي", "اوريو", "شيكولاته ديرى ميلك", "شيكولاته مورو", "بابلي", "كتاكيتو", "لاراش", "شوجر", "شكولاتة تويكس45", "بالاكس", "جلاكسي", "بلوكس 7", "بلوكس 12", "كتكات 2", "كتكات", "تاو تاو", "سي كمارا", "بسكوت سادة", "شوكلاتة سي كمارا", "باتية", "مخبوزات ب 20", "مخبوزات ب 25", "ريتس", "جي كولا", "ديلينو", "توريكس", "براندبيت", "مارشيملو 11", "ساندوتش فول", "ساندوتش طعمية", "ساندوتش بطاطس", "ساندوتش لانشون دجاج", "ساندوتش لانشون لحم", "ساندوتش جبنه رومى", "ساندوتش جبنه فيتا", "ساندوتش بابا غنوج", "ساندوتش بيض مسلوق", "ساندوتش بيض اومليت", "ساندوتش ميكس", "ساندوتش حلاوة بالقشطة", "طبق فول", "طبق بطاطس", "قرس طعمية", "بيضه مسلوقه", "علبه سلطه", "فول اسكندرانى", "طبق فيتا", "رغيف عيش شامى", "رغيف عيش بلدى", "مسقعة باللحمة المفرومة", "ساندوتش مسقعه", "بطاطس مهروسه", "لانشون على رومى", "اومليت علي رومي", "بطاطس علي رومي", "بيض بالبسطرمة", "مربي", "وجبة فاهيتا", "كبدة", "شيش", "استريبس", "نجرسكو", "كفتة", "حواوشي", "نص فرخة", "بيتزا فراخ", "ربع فرخة", "سجق", "وجبه بوكس", "بشامل", "برجر بالبيض", "برجر سادة", "وجبة شيش", "فيلية", "فاهيتا", "شاورما", "هوت دوج"];
 const FL=['الثاني','الثالث','الرابع','الخامس','السادس','السابع','كافيتيريا'];
@@ -66,6 +66,7 @@ const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice
 const toast=x=>{const t=$('t');t.textContent=x;t.className='on';setTimeout(()=>t.className='',2000)};
 const chips=(l,cur,a)=>'<div class="chips">'+l.map(x=>`<button class="chip${x[0]===cur?' on':''}" data-${a}="${x[0]}">${x[1]}</button>`).join('')+'</div>';
 const ADM=location.hash==='#admin';
+const ADMIN_EMAIL='mostafa.amer05.ma@gmail.com';
 addEventListener('hashchange',()=>location.reload());
 let db,auth,U=null;
 try{const app=initializeApp(CFG);auth=getAuth(app);db=getFirestore(app)}catch(e){$('m').innerHTML='<div class="em">إعدادات Firebase ناقصة. راجع ملف README.</div>'}
@@ -76,16 +77,26 @@ if(auth)onAuthStateChanged(auth,u=>{U=u;if(!u&&!ADM){signInAnonymously(auth).cat
  ADM?adminStart():empStart()});
 
 /* ================= الموظف ================= */
-let P={};try{P=JSON.parse(localStorage.getItem('bp')||'{}')}catch(e){}
-let C={},myOrders=[],q='',unsubE=null;
-function empStart(){
- if(unsubE)unsubE();
- unsubE=onSnapshot(query(collection(db,'orders'),where('uid','==',U.uid)),s=>{myOrders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9)).slice(0,6);later(emp)},()=>{});
- emp()}
+let P=null,C={},myOrders=[],q='',unsubE=null,STF=[],LS={f:'',id:''};
+async function empStart(){
+ if(unsubE){unsubE();unsubE=null}
+ P=null;
+ if(U&&!U.isAnonymous){
+  try{const s=await getDoc(doc(db,'staff',U.uid));if(s.exists())P=s.data()}catch(e){}
+  if(!P){await signOut(auth);return}
+  unsubE=onSnapshot(query(collection(db,'orders'),where('uid','==',U.uid)),s=>{myOrders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9)).slice(0,6);later(emp)},()=>{});
+  emp();return}
+ try{const s=await getDocs(collection(db,'staff'));STF=s.docs.map(d=>({id:d.id,...d.data()}))}catch(e){STF=[]}
+ loginView()}
+function loginView(){
+ $('ti').textContent='دخول الموظفين';$('hx').innerHTML='';
+ const L=STF.filter(x=>x.floor===LS.f).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+ let h='<p>انت في أنهي دور؟</p>'+chips(FL.map(x=>[x,x==='كافيتيريا'?x:'دور '+x]),LS.f,'lf');
+ if(LS.f)h+=L.length?'<p>اختار اسمك</p>'+chips(L.map(x=>[x.id,esc(x.name)]),LS.id,'ls')+(LS.id?'<input class="in" id="lpin" type="password" inputmode="numeric" placeholder="الرقم السري" dir="ltr"><button class="btn" id="lg" style="width:100%">دخول</button>':''):'<div class="em">مفيش أسماء متسجلة في الدور ده. كلم المدير.</div>';
+ $('m').innerHTML=h}
 function emp(){
  const m=$('m');$('ti').textContent='طلب من البوفيه';
- if(!P.name||!P.floor){m.innerHTML='<h2>أهلاً بيك</h2><input class="in" id="pn" placeholder="اسمك" value="'+esc(P.name||'')+'"><p>انت في أنهي دور؟</p>'+chips(FL.map(x=>[x,x==='كافيتيريا'?x:'دور '+x]),P.floor||'','pf')+'<button class="btn" id="ps" style="width:100%">ابدأ</button>';return}
- $('hx').innerHTML=`<button class="chip" data-edit="1">${esc(P.name)} · ${P.floor==='كافيتيريا'?P.floor:'دور '+P.floor}</button>`;
+ $('hx').innerHTML=`<span>${esc(P.name)} · ${P.floor==='كافيتيريا'?P.floor:'دور '+esc(P.floor)}</span> <button class="chip" id="lo2" style="min-height:40px;padding:6px 12px">خروج</button>`;
  const n=Object.values(C).reduce((a,b)=>a+b,0);
  let h='<input class="in" id="sq" type="search" placeholder="ابحث عن صنف" value="'+esc(q)+'">';
  const L=ITEMS.map((x,i)=>[x,i]).filter(x=>!q.trim()||x[0].includes(q.trim()));
@@ -101,14 +112,15 @@ async function sendOrder(){
  catch(e){toast('فشل الإرسال، اتأكد من النت');$('send').disabled=false}}
 
 /* ================= الأدمن ================= */
-let ORD=[],LED={},S={tab:'ord',d:iso(new Date()),mode:'in',dest:'الثاني',ct:'count',q:'',only:false},recs=null,unsubs=[];
-const TABS=[['ord','الطلبات'],['mv','صرف/استلام'],['cnt','جرد'],['rep','التقرير']];
+let STAFF=[],ORD=[],LED={},S={tab:'ord',d:iso(new Date()),mode:'in',dest:'الثاني',ct:'count',q:'',only:false},recs=null,unsubs=[];
+const TABS=[['ord','الطلبات'],['mv','صرف/استلام'],['cnt','جرد'],['rep','التقرير'],['stf','الموظفين']];
 function adminStart(){
  unsubs.forEach(f=>f());unsubs=[];
- if(!U||U.isAnonymous){$('nv').hidden=true;$('m').innerHTML='<h2>دخول الأدمن</h2><input class="in" id="em" type="email" placeholder="الإيميل" dir="ltr"><input class="in" id="pw" type="password" placeholder="كلمة السر" dir="ltr"><button class="btn" id="li" style="width:100%">دخول</button>';return}
+ if(!U||U.email!==ADMIN_EMAIL){$('nv').hidden=true;$('m').innerHTML='<h2>دخول الأدمن</h2><input class="in" id="em" type="email" placeholder="الإيميل" dir="ltr"><input class="in" id="pw" type="password" placeholder="كلمة السر" dir="ltr"><button class="btn" id="li" style="width:100%">دخول</button>';return}
  $('nv').hidden=false;$('hx').innerHTML='<input class="in" type="date" id="dt" style="width:auto;margin:0" value="'+S.d+'"> <button class="chip" id="lo">خروج</button>';
  unsubs.push(onSnapshot(collection(db,'orders'),s=>{ORD=s.docs.map(d=>({id:d.id,...d.data()}));recs=null;later(adm)},e=>toast('لا توجد صلاحية (راجع القواعد)')));
  unsubs.push(onSnapshot(collection(db,'ledger'),s=>{LED={};s.docs.forEach(d=>LED[d.id]=d.data());recs=null;later(adm)}));
+ unsubs.push(onSnapshot(collection(db,'staff'),s=>{STAFF=s.docs.map(d=>({id:d.id,...d.data()}));later(adm)},()=>{}));
  adm()}
 const lid=(t,de,i)=>[t,de,S.d,i].join('|');
 function R(){if(!recs){recs=Object.values(LED).map(r=>({t:r.t,d:r.d,i:r.i,q:r.q}));ORD.filter(o=>o.status==='confirmed').forEach(o=>Object.entries(o.items||{}).forEach(([i,v])=>recs.push({t:'out',d:o.date,i:+i,q:v})))}return recs}
@@ -117,12 +129,12 @@ function lastCount(i){let od='',b=null;R().forEach(r=>{if(r.i===i&&r.t==='open'&
 async function put(t,de,i,v){const id=lid(t,de,i);if(v===''||isNaN(v)||((t==='out'||t==='in')&&v<=0)){delete LED[id];recs=null;await deleteDoc(doc(db,'ledger',id))}else{LED[id]={t,de,d:S.d,i,q:v};recs=null;await setDoc(doc(db,'ledger',id),{t,de,d:S.d,i,q:v})}}
 const getL=(t,de,i)=>{const r=LED[lid(t,de,i)];return r?r.q:0};
 function adm(){
- if(!U||U.isAnonymous)return;
+ if(!U||U.email!==ADMIN_EMAIL)return;
  $('ti').textContent='لوحة الأدمن';
  const pend=ORD.filter(o=>o.status==='pending').length;
  $('nv').innerHTML=TABS.map(t=>`<button data-tab="${t[0]}" class="${S.tab===t[0]?'on':''}">${t[1]}${t[0]==='ord'&&pend?' ('+pend+')':''}</button>`).join('');
  const m=$('m'),sc=m.scrollTop;let h='';
- if(S.tab==='ord')h=ordersView();else if(S.tab==='rep')h=reportView();else{
+ if(S.tab==='ord')h=ordersView();else if(S.tab==='rep')h=reportView();else if(S.tab==='stf')h=staffView();else{
   if(S.tab==='mv')h+=chips([['in','استلام']].concat(OUT.map(x=>['o:'+x,'صرف: '+x])),S.mode==='in'?'in':'o:'+S.dest,'mode');
   else h+=chips([['open','فتح الأسبوع'],['count','جرد اليوم']],S.ct,'ct');
   h+='<input class="in" id="sq" type="search" placeholder="ابحث عن صنف" value="'+esc(S.q)+'">';
@@ -132,6 +144,10 @@ function adm(){
    return`<div class="row${v?' has':''}"><span class="nm">${esc(x)}</span><span class="st"><button class="b" data-a="1" data-i="${i}">+</button><input class="q" inputmode="decimal" data-n="${i}" value="${v||''}" placeholder="0"><button class="b m" data-a="-1" data-i="${i}">−</button></span></div>`}).join('')}
  m.innerHTML=h;m.scrollTop=sc;
  const sq=$('sq');if(sq)sq.oninput=()=>{S.q=sq.value;const p=sq.selectionStart;adm();const z=$('sq');z.focus();z.setSelectionRange(p,p)}}
+function staffView(){
+ let h='<div class="card"><h3>إضافة موظف</h3><input class="in" id="sn" placeholder="الاسم" value="'+esc(S.sn||'')+'"><input class="in" id="sp" placeholder="الرقم السري (٦ خانات أو أكتر)" dir="ltr" value="'+esc(S.sp||'')+'">'+chips(FL.map(x=>[x,x==='كافيتيريا'?x:'دور '+x]),S.sf||'','sf')+'<button class="btn" id="sa" style="width:100%">إضافة</button></div>';
+ FL.forEach(f=>{const L=STAFF.filter(x=>x.floor===f);if(L.length)h+='<h3>'+(f==='كافيتيريا'?f:'دور '+f)+'</h3>'+L.map(x=>`<div class="row"><span class="nm">${esc(x.name)}</span><button class="btn d" data-sd="${x.id}">حذف</button></div>`).join('')});
+ return h}
 function ordersView(){
  const P_=ORD.filter(o=>o.status==='pending').sort((a,b)=>(a.createdAt?.seconds||9e9)-(b.createdAt?.seconds||9e9));
  const D=ORD.filter(o=>o.status!=='pending').sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9)).slice(0,12);
@@ -150,9 +166,15 @@ function reportView(){
 /* ================= الأحداث ================= */
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  try{
- if(b.id==='ps'){const n=$('pn').value.trim();if(!n||!P.floor){toast('اكتب اسمك واختار الدور');return}P.name=n;localStorage.setItem('bp',JSON.stringify(P));emp()}
- else if(d.pf){P.name=($('pn')||{}).value||P.name;P.floor=d.pf;localStorage.setItem('bp',JSON.stringify(P));emp()}
- else if(d.edit){P.floor=null;emp()}
+ if(d.lf){LS.f=d.lf;LS.id='';loginView()}
+ else if(d.ls){LS.id=d.ls;loginView()}
+ else if(b.id==='lg'){const s=STF.find(x=>x.id===LS.id);try{await signInWithEmailAndPassword(auth,s.email,$('lpin').value)}catch(x){toast('الرقم السري غلط')}}
+ else if(b.id==='lo2'){C={};await signOut(auth)}
+ else if(d.sf){S.sn=$('sn').value;S.sp=$('sp').value;S.sf=d.sf;adm()}
+ else if(b.id==='sa'){const name=$('sn').value.trim(),pin=$('sp').value.trim();if(!name||!S.sf||pin.length<6){toast('اكتب الاسم واختار الدور ورقم سري ٦ خانات على الأقل');return}
+  b.disabled=true;const em='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'@buffet-staff.app';const sa=initializeApp(CFG,'sec'+Date.now());
+  try{const au=getAuth(sa);const c=await createUserWithEmailAndPassword(au,em,pin);await setDoc(doc(db,'staff',c.user.uid),{name,floor:S.sf,email:em});await signOut(au);S.sn='';S.sp='';toast('تمت الإضافة ✓')}finally{deleteApp(sa);adm()}}
+ else if(d.sd){await deleteDoc(doc(db,'staff',d.sd))}
  else if(b.id==='send')sendOrder();
  else if(b.id==='li'){try{await signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(x){toast('الإيميل أو كلمة السر غلط')}}
  else if(b.id==='lo'){await signOut(auth);location.reload()}
