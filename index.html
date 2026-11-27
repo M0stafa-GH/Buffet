@@ -39,7 +39,7 @@ nav button.on{color:var(--pri);box-shadow:inset 0 3px 0 var(--pri)}
 .ln{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--ln)}
 .rt{display:grid;grid-template-columns:1fr 64px 64px 84px;gap:6px;align-items:center;padding:8px 10px;background:var(--sf);border-bottom:1px solid var(--ln)}
 .rt.h{font-weight:800;color:var(--mut);font-size:15px}.rt span:not(:first-child){text-align:center}
-.rt6{grid-template-columns:1fr repeat(5,48px);font-size:15px}.rt2{grid-template-columns:1fr 80px}.sendbar{position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
+.rt7{grid-template-columns:1fr repeat(6,42px);font-size:14px;gap:4px}.rt2{grid-template-columns:1fr 80px}.sendbar{position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
 .sendbar .btn{width:100%;font-size:20px;min-height:58px}
 .tag{font-size:14px;padding:2px 10px;border-radius:999px;border:1px solid var(--ln);color:var(--mut)}
 .tag.ok{color:var(--ok);border-color:var(--ok)}.tag.bad{color:var(--bad);border-color:var(--bad)}
@@ -122,6 +122,7 @@ function adminStart(){
  unsubs.push(onSnapshot(collection(db,'ledger'),s=>{LED={};s.docs.forEach(d=>LED[d.id]=d.data());recs=null;later(adm)}));
  unsubs.push(onSnapshot(collection(db,'staff'),s=>{STAFF=s.docs.map(d=>({id:d.id,...d.data()}));later(adm)},()=>{}));
  adm()}
+const cur=()=>(S.tab==='cnt'&&S.ct==='ext')?['out','خارجي']:(S.tab==='cnt'&&S.ct==='in')?['in','']:(S.mode==='in'?['in','']:['out',S.dest]);
 const lid=(t,de,i)=>[t,de,S.d,i].join('|');
 function R(){if(!recs){recs=Object.values(LED).map(r=>({t:r.t,de:r.de||'',d:r.d,i:r.i,q:r.q}));ORD.filter(o=>o.status==='confirmed').forEach(o=>Object.entries(o.items||{}).forEach(([i,v])=>recs.push({t:'out',de:o.floor,d:o.date,i:+i,q:v})))}return recs}
 function calc(i,up){let od='',ob=0;const rs=R().filter(r=>r.i===i&&r.d<=up);rs.forEach(r=>{if(r.t==='open'&&r.d>=od){od=r.d;ob=r.q}});let s=ob;rs.forEach(r=>{if(r.d<od)return;if(r.t==='in')s+=r.q;else if(r.t==='out')s-=r.q});return s}
@@ -135,12 +136,12 @@ function adm(){
  $('nv').innerHTML=TABS.map(t=>`<button data-tab="${t[0]}" class="${S.tab===t[0]?'on':''}">${t[1]}${t[0]==='ord'&&pend?' ('+pend+')':''}</button>`).join('');
  const m=$('m'),sc=m.scrollTop;let h='';
  if(S.tab==='ord')h=ordersView();else if(S.tab==='rep')h=reportView();else if(S.tab==='stf')h=staffView();else{
-  if(S.tab==='mv')h+=chips([['in','استلام']].concat(OUT.map(x=>['o:'+x,'صرف: '+x])),S.mode==='in'?'in':'o:'+S.dest,'mode');
-  else h+=chips([['open','فتح الأسبوع'],['count','جرد اليوم']],S.ct,'ct');
+  if(S.tab==='mv')h+=chips([['in','استلام']].concat(OUT.map(x=>['o:'+x,x==='خارجي'?'تحويلات خارجي':'صرف: '+x])),S.mode==='in'?'in':'o:'+S.dest,'mode');
+  else h+=chips([['open','فتح الأسبوع'],['count','جرد اليوم'],['in','استلام'],['ext','تحويلات خارجي']],S.ct,'ct');
   h+='<input class="in" id="sq" type="search" placeholder="ابحث عن صنف" value="'+esc(S.q)+'">';
   const L=ITEMS.map((x,i)=>[x,i]).filter(x=>!S.q.trim()||x[0].includes(S.q.trim()));
-  h+=L.map(([x,i])=>{if(S.tab==='cnt'){const r=LED[lid(S.ct,'',i)],ex=calc(i,S.d);return`<div class="row${r?' has':''}"><span class="nm">${esc(x)}<span class="sub">المتوقع ${ex}</span></span><input class="q w" inputmode="decimal" data-c="${i}" value="${r?r.q:''}" placeholder="${S.ct==='count'?ex:''}"></div>`}
-   const t=S.mode==='in'?'in':'out',de=t==='out'?S.dest:'',v=getL(t,de,i);
+  h+=L.map(([x,i])=>{if(S.tab==='cnt'&&S.ct!=='ext'&&S.ct!=='in'){const r=LED[lid(S.ct,'',i)],ex=calc(i,S.d);return`<div class="row${r?' has':''}"><span class="nm">${esc(x)}<span class="sub">المتوقع ${ex}</span></span><input class="q w" inputmode="decimal" data-c="${i}" value="${r?r.q:''}" placeholder="${S.ct==='count'?ex:''}"></div>`}
+   const[t,de]=cur(),v=getL(t,de,i);
    return`<div class="row${v?' has':''}"><span class="nm">${esc(x)}</span><span class="st"><button class="b" data-a="1" data-i="${i}">+</button><input class="q" inputmode="decimal" data-n="${i}" value="${v||''}" placeholder="0"><button class="b m" data-a="-1" data-i="${i}">−</button></span></div>`}).join('')}
  m.innerHTML=h;m.scrollTop=sc;
  const sq=$('sq');if(sq)sq.oninput=()=>{S.q=sq.value;const p=sq.selectionStart;adm();const z=$('sq');z.focus();z.setSelectionRange(p,p)}}
@@ -172,19 +173,19 @@ function reportView(){
  const sum=(l,k)=>l.reduce((x,y)=>x+y[k],0);
  const D=ITEMS.map((n,i)=>{const ws=PS.map(p=>wd(i,p[0],p[1])),dfs=ws.filter(x=>x.df!==null),bf={};
   ws.forEach(x=>{for(const k in x.bf)bf[k]=(bf[k]||0)+x.bf[k]});
-  return{n,ob:ws[0].ob,inn:sum(ws,'inn'),out:sum(ws,'out'),cnt:dfs.length?dfs[dfs.length-1].cnt:null,df:dfs.length?Math.round(sum(dfs,'df')*100)/100:null,bf}});
+  const ex=bf['خارجي']||0;return{n,ob:ws[0].ob,inn:sum(ws,'inn'),out:sum(ws,'out')-ex,ext:ex,cnt:dfs.length?dfs[dfs.length-1].cnt:null,df:dfs.length?Math.round(sum(dfs,'df')*100)/100:null,bf}});
  const fl=S.rf!=='all';
- let L=D.filter(x=>fl?(x.bf[S.rf]||0)>0:(x.ob||x.inn||x.out||x.cnt!==null));
+ let L=D.filter(x=>fl?(x.bf[S.rf]||0)>0:(x.ob||x.inn||x.out||x.ext||x.cnt!==null));
  if(S.only&&!fl)L=L.filter(x=>x.df);
  const bad=D.filter(x=>x.df).length,cn=D.filter(x=>x.cnt!==null).length;
  const fm=d=>d===null?'—':d<0?`<span class="bad">-${-d}</span>`:d>0?`<span class="ok">+${d}</span>`:'<span class="ok">✓</span>';
  const lab=S.pm==='m'?'شهر '+a.slice(0,7):'أسبوع '+a+' ← '+b;
- window._txt='تقرير '+lab+(fl?' - '+S.rf:'')+'\n'+L.map(x=>fl?x.n+': '+x.bf[S.rf]:x.n+': فتح '+x.ob+' / استلام '+x.inn+' / صرف '+x.out+' / جرد '+(x.cnt===null?'—':x.cnt)+' / فرق '+(x.df===null?'—':x.df)).join('\n');
+ window._txt='تقرير '+lab+(fl?' - '+S.rf:'')+'\n'+L.map(x=>fl?x.n+': '+x.bf[S.rf]:x.n+': فتح '+x.ob+' / استلام '+x.inn+' / صرف '+x.out+' / خارجي '+x.ext+' / جرد '+(x.cnt===null?'—':x.cnt)+' / فرق '+(x.df===null?'—':x.df)).join('\n');
  let h=chips([['w','أسبوعي'],['m','شهري']],S.pm,'pm')+`<div class="act" style="align-items:center;justify-content:space-between"><button class="chip" data-pn="-1">السابق ›</button><b>${lab}</b><button class="chip" data-pn="1">‹ التالي</button></div>`;
- h+=chips([['all','كل الأدوار']].concat(OUT.map(x=>[x,x])),S.rf,'rf');
+ h+=chips([['all','كل الأدوار']].concat(OUT.map(x=>[x,x==='خارجي'?'تحويلات خارجي':x])),S.rf,'rf');
  h+=`<p>تم جرد <b>${cn}</b> صنف، والفروقات في <b class="${bad?'bad':'ok'}">${bad}</b> صنف.</p><div class="act"><button class="btn${S.only?'':' o'}" data-f="1">${S.only?'عرض الكل':'الفروقات فقط'}</button><button class="btn o" data-cp="1">نسخ التقرير</button></div>`;
- h+=fl?'<div class="rt rt2 h"><span>الصنف</span><span>صرف '+esc(S.rf)+'</span></div>':'<div class="rt rt6 h"><span>الصنف</span><span>فتح</span><span>استلام</span><span>صرف</span><span>جرد</span><span>فرق</span></div>';
- h+=L.length?L.map(x=>fl?`<div class="rt rt2"><span>${esc(x.n)}</span><span>${x.bf[S.rf]}</span></div>`:`<div class="rt rt6"><span>${esc(x.n)}</span><span>${x.ob}</span><span>${x.inn}</span><span>${x.out}</span><span>${x.cnt===null?'—':x.cnt}</span><span>${fm(x.df)}</span></div>`).join(''):'<div class="em">مفيش حركة في الفترة دي.</div>';
+ h+=fl?'<div class="rt rt2 h"><span>الصنف</span><span>'+(S.rf==='خارجي'?'تحويلات':'صرف '+esc(S.rf))+'</span></div>':'<div class="rt rt7 h"><span>الصنف</span><span>فتح</span><span>استلام</span><span>صرف</span><span>خارجي</span><span>جرد</span><span>فرق</span></div>';
+ h+=L.length?L.map(x=>fl?`<div class="rt rt2"><span>${esc(x.n)}</span><span>${x.bf[S.rf]}</span></div>`:`<div class="rt rt7"><span>${esc(x.n)}</span><span>${x.ob}</span><span>${x.inn}</span><span>${x.out}</span><span>${x.ext}</span><span>${x.cnt===null?'—':x.cnt}</span><span>${fm(x.df)}</span></div>`).join(''):'<div class="em">مفيش حركة في الفترة دي.</div>';
  return h}
 
 /* ================= الأحداث ================= */
@@ -216,13 +217,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
  else if(d.cp){try{await navigator.clipboard.writeText(window._txt||'');toast('تم النسخ')}catch(x){toast('النسخ مش متاح')}}
  else if(d.a){const r=b.closest('.row'),inp=r.querySelector('.q'),i=+d.i;
   if(U&&!ADM){C[i]=Math.max(0,(C[i]||0)+ +d.a);inp.value=C[i]||'';r.classList.toggle('has',C[i]>0);const n=Object.values(C).reduce((a,c)=>a+c,0),s=$('send');s.disabled=!n;s.textContent=n?'إرسال الطلب ('+n+' قطعة)':'اختار الأصناف الأول'}
-  else{const t=S.mode==='in'?'in':'out',de=t==='out'?S.dest:'',v=Math.max(0,getL(t,de,i)+ +d.a);inp.value=v||'';r.classList.toggle('has',v>0);await put(t,de,i,v)}}
+  else{const[t,de]=cur(),v=Math.max(0,getL(t,de,i)+ +d.a);inp.value=v||'';r.classList.toggle('has',v>0);await put(t,de,i,v)}}
  }catch(x){toast('حصل خطأ: '+(x.code||x.message))}});
 document.addEventListener('change',async e=>{const el=e.target,v=el.value.trim()===''?'':parseFloat(el.value.replace(',','.')),dt=el.dataset;
  try{
  if(el.id==='dt'){S.d=el.value||S.d;adm()}
  else if(dt.oe){const[id,i]=dt.oe.split('|');await updateDoc(doc(db,'orders',id),{['items.'+i]:v>0?v:deleteField()})}
- else if(dt.n!==undefined){const i=+dt.n;if(!ADM){C[i]=v>0?v:0;emp()}else{const t=S.mode==='in'?'in':'out';await put(t,t==='out'?S.dest:'',i,v===''?0:v);el.closest('.row').classList.toggle('has',v>0)}}
+ else if(dt.n!==undefined){const i=+dt.n;if(!ADM){C[i]=v>0?v:0;emp()}else{const[t,de]=cur();await put(t,de,i,v===''?0:v);el.closest('.row').classList.toggle('has',v>0)}}
  else if(dt.c!==undefined){await put(S.ct,'',+dt.c,v);el.closest('.row').classList.toggle('has',v!=='')}
  }catch(x){toast('حصل خطأ: '+(x.code||x.message))}});
 </script></body></html>
